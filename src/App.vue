@@ -1,6 +1,7 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import Alert from './components/Alert.vue'
+import Loading from './components/Loading.vue'
 
 const currencys = ref([
   { codigo: 'USD', texto: 'Dolar de Estados Unidos' },
@@ -12,6 +13,7 @@ const currencys = ref([
 const error = ref('')
 const criptos = ref([])
 const limit = ref('20')
+const loading = ref(false)
 
 const quote = reactive({
   currency: '',
@@ -21,29 +23,39 @@ const quote = reactive({
 const price = ref({})
 
 onMounted(() => {
-  const url = `https://min-api.cryptocompare.com/data/top/mktcapfull?limit=${limit.value}&tsym=USD`
+  const url = `https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD`
   fetch(url)
     .then(resp => resp.json())
     .then(({ Data }) => criptos.value = Data)
 })
 
-const cotzarCripto = () => {
+const quoteCripto = () => {
   if (Object.values(quote).includes('')) {
     error.value = 'Todos los campos son obligatorios'
     return
   }
   error.value = ''
-  getquote()
+  getQuote()
 }
 
-const getquote = () => {
+const getQuote = () => {
+  loading.value = true
+  price.value = {}
   const { currency, criptoCurrency } = quote
   const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptoCurrency}&tsyms=${currency}`
 
   fetch(url)
     .then(resp => resp.json())
-    .then(data => price.value = data.DISPLAY[criptoCurrency][currency])
+    .then(data => {
+      price.value = data.DISPLAY[criptoCurrency][currency]
+      loading.value = false
+    }) 
+    .catch(e => console.log(e))
 }
+
+const isResultSeted = computed(() => {
+  return Object.values(price.value).length > 0;
+})
 
 </script>
 
@@ -52,7 +64,7 @@ const getquote = () => {
     <h1 class="title">Cotizador de <span>Criptomonedas</span></h1>
     <div class="content">
       <Alert v-if="error">{{ error }}</Alert>
-      <form class="form" @submit.prevent="cotzarCripto">
+      <form class="form" @submit.prevent="quoteCripto">
         <div class="field">
           <label for="moneda">Moneda:</label>
           <select id="moneda" v-model="quote.currency">
@@ -73,6 +85,22 @@ const getquote = () => {
         </div>
         <input type="submit" value="quote">
       </form>
+
+      <Loading v-if="loading" />
+
+      <div class="container-result" v-if="isResultSeted">
+        <h2>Cotización</h2>
+        <div class="result">
+          <img :src="`https://cryptocompare.com/${price.IMAGEURL}`" alt="Icono de criptomoneda">
+          <div>
+            <p>Precio actual: <span>{{ price.PRICE }}</span></p>
+            <p>Máximo del día: <span>{{ price.HIGHDAY }}</span></p>
+            <p>Mínimo del día: <span>{{ price.LOWDAY }}</span></p>
+            <p>Últimas 24 horas: <span>{{ price.CHANGEPCT24HOUR }}%</span></p>
+            <p>úLTIMA actualización: <span>{{ price.LASTUPDATE }}</span></p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
