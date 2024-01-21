@@ -1,32 +1,17 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import Alert from './components/Alert.vue'
 import Loading from './components/Loading.vue'
+import useCripto from './composables/useCripto'
+import QuoteResult from './components/QuoteResult.vue'
 
-const currencys = ref([
-  { codigo: 'USD', texto: 'Dolar de Estados Unidos' },
-  { codigo: 'MXN', texto: 'Peso Mexicano' },
-  { codigo: 'EUR', texto: 'Euro' },
-  { codigo: 'GBP', texto: 'Libra Esterlina' },
-])
+const { currencys, criptos, loading, getQuote, price, isResultSeted } = useCripto()
 
 const error = ref('')
-const criptos = ref([])
-const limit = ref('20')
-const loading = ref(false)
 
 const quote = reactive({
   currency: '',
   criptoCurrency: ''
-})
-
-const price = ref({})
-
-onMounted(() => {
-  const url = `https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD`
-  fetch(url)
-    .then(resp => resp.json())
-    .then(({ Data }) => criptos.value = Data)
 })
 
 const quoteCripto = () => {
@@ -35,27 +20,8 @@ const quoteCripto = () => {
     return
   }
   error.value = ''
-  getQuote()
+  getQuote(quote)
 }
-
-const getQuote = () => {
-  loading.value = true
-  price.value = {}
-  const { currency, criptoCurrency } = quote
-  const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptoCurrency}&tsyms=${currency}`
-
-  fetch(url)
-    .then(resp => resp.json())
-    .then(data => {
-      price.value = data.DISPLAY[criptoCurrency][currency]
-      loading.value = false
-    }) 
-    .catch(e => console.log(e))
-}
-
-const isResultSeted = computed(() => {
-  return Object.values(price.value).length > 0;
-})
 
 </script>
 
@@ -83,24 +49,10 @@ const isResultSeted = computed(() => {
             </option>
           </select>
         </div>
-        <input type="submit" value="quote">
+        <input type="submit" value="Cotizar">
       </form>
-
       <Loading v-if="loading" />
-
-      <div class="container-result" v-if="isResultSeted">
-        <h2>Cotización</h2>
-        <div class="result">
-          <img :src="`https://cryptocompare.com/${price.IMAGEURL}`" alt="Icono de criptomoneda">
-          <div>
-            <p>Precio actual: <span>{{ price.PRICE }}</span></p>
-            <p>Máximo del día: <span>{{ price.HIGHDAY }}</span></p>
-            <p>Mínimo del día: <span>{{ price.LOWDAY }}</span></p>
-            <p>Últimas 24 horas: <span>{{ price.CHANGEPCT24HOUR }}%</span></p>
-            <p>úLTIMA actualización: <span>{{ price.LASTUPDATE }}</span></p>
-          </div>
-        </div>
-      </div>
+      <QuoteResult v-if="isResultSeted" :price="price"/>
     </div>
   </div>
 </template>
