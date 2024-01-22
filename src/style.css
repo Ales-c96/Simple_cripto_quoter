@@ -1,6 +1,6 @@
 :root {
     --blanco: #fff;
-    --primario: #61ecbc;
+    --primario: #f6b81a;
     --negro: #182339;
 }
 html {
@@ -18,7 +18,7 @@ body {
 .container {
     max-width: 80rem;
     width: 95%;
-    margin: 0 auto;
+    margin: 0 85% 0 15%;
 }
 .title {
     font-size: 3.8rem;
@@ -72,7 +72,7 @@ body {
     margin-top: 2rem;
 }
 .form [type="submit"]:hover {
-    background-color: #0cb387;
+    background-color: #c38f0b;
 }
 
 .container-result h2 {
